@@ -1,0 +1,39 @@
+{
+  "family": "onward-dev-order-service",
+  "networkMode": "awsvpc",
+  "requiresCompatibilities": ["FARGATE"],
+  "runtimePlatform": {
+    "operatingSystemFamily": "LINUX",
+    "cpuArchitecture": "X86_64"
+  },
+  "cpu": "256",
+  "memory": "512",
+  "executionRoleArn": "arn:aws:iam::711387121692:role/onward-dev-order-task-execution-role",
+  "containerDefinitions": [
+    {
+      "name": "order-app",
+      "image": "<IMAGE1_NAME>",
+      "essential": true,
+      "portMappings": [
+        {
+          "containerPort": 8080,
+          "protocol": "tcp"
+        }
+      ],
+      "environment": [
+        { "name": "FULL_NAME", "value": "Katy Great Adonaï" },
+        { "name": "LAB_NAME", "value": "Delivering Order System Updates Safely for Onward Logistics" },
+        { "name": "APP_VERSION", "value": "__APP_VERSION__" },
+        { "name": "PORT", "value": "8080" }
+      ],
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "/ecs/onward-dev-order-service",
+          "awslogs-region": "eu-west-1",
+          "awslogs-stream-prefix": "order-app"
+        }
+      }
+    }
+  ]
+}

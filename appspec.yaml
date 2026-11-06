@@ -1,0 +1,10 @@
+version: 0.0
+Resources:
+  - TargetService:
+      Type: AWS::ECS::Service
+      Properties:
+        # CodePipeline replaces this placeholder with the new task definition revision
+        TaskDefinition: <TASK_DEFINITION>
+        LoadBalancerInfo:
+          ContainerName: order-app
+          ContainerPort: 8080
