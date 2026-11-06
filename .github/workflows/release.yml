@@ -1,0 +1,63 @@
+name: release
+
+# Every merge to main builds a new image. Pushing the "latest" tag to ECR raises an
+# EventBridge event that starts CodePipeline, which deploys with CodeDeploy blue/green.
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+# Only one release at a time; a newer merge waits for the current one
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+# id-token lets the job request a short-lived OIDC token; no AWS keys are stored in GitHub
+permissions:
+  id-token: write
+  contents: read
+
+env:
+  AWS_REGION: eu-west-1
+  AWS_ROLE_ARN: arn:aws:iam::711387121692:role/onward-dev-github-actions-role
+  ECR_REPOSITORY: onward-dev-order-service
+  ARTIFACT_BUCKET: onward-dev-delivery-artifacts-711387121692
+  DEPLOY_BUNDLE_KEY: deploy/onward-order-service.zip
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Get short-lived AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ env.AWS_ROLE_ARN }}
+          role-session-name: onward-release-${{ github.run_id }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Log in to Amazon ECR
+        id: ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build image
+        run: |
+          VERSION="${GITHUB_SHA::7}"
+          IMAGE="${{ steps.ecr.outputs.registry }}/${ECR_REPOSITORY}"
+          docker build -t "$IMAGE:$VERSION" -t "$IMAGE:latest" .
+          echo "VERSION=$VERSION" >> "$GITHUB_ENV"
+          echo "IMAGE=$IMAGE" >> "$GITHUB_ENV"
+
+      # The bundle must be in S3 before the image push starts the pipeline
+      - name: Upload deploy bundle (task definition + AppSpec)
+        run: |
+          sed -i "s/__APP_VERSION__/${VERSION}/" taskdef.json
+          zip deploy.zip taskdef.json appspec.yaml
+          aws s3 cp deploy.zip "s3://${ARTIFACT_BUCKET}/${DEPLOY_BUNDLE_KEY}"
+
+      - name: Push image (triggers the pipeline)
+        run: |
+          docker push "$IMAGE:$VERSION"
+          docker push "$IMAGE:latest"
+          echo "Released ${VERSION}: CodePipeline onward-dev-order-pipeline takes it from here" >> "$GITHUB_STEP_SUMMARY"
