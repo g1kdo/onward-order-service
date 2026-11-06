@@ -1,0 +1,4 @@
+*.class
+.env
+.env.*
+deploy.zip

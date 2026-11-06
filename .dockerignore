@@ -1,0 +1,6 @@
+.git
+.github
+*.md
+*.zip
+taskdef.json
+appspec.yaml
