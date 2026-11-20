@@ -92,7 +92,7 @@ public class OrderApp {
               </style>
             </head>
             <body>
-              <h1>%s</h1>
+              <h1>%s - Version 2</h1>
               <h2>%s</h2>
               <div class="card server">
                 <strong>Served by task</strong> %s in %s (private IP %s)<br>

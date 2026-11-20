@@ -17,6 +17,7 @@ permissions:
   id-token: write
   contents: read
 
+#store in the github secrets
 env:
   AWS_REGION: eu-west-1
   AWS_ROLE_ARN: arn:aws:iam::711387121692:role/onward-dev-github-actions-role
@@ -24,6 +25,7 @@ env:
   ARTIFACT_BUCKET: onward-dev-delivery-artifacts-711387121692
   DEPLOY_BUNDLE_KEY: deploy/onward-order-service.zip
 
+# jobs should come before the build
 jobs:
   build-and-push:
     runs-on: ubuntu-latest
